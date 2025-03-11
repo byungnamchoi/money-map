@@ -1,0 +1,42 @@
+---
+title: "MAIN"
+layout: "default"
+css: "/css/main.scss"
+js:
+  - "/js/main.esm.js"
+  - "./page.js"
+  - type: "nomodule"
+    src: "./fallback.js"
+  - type: "module"
+    src: "my-module.js"
+  - defer: true
+    src: "./defer.js"
+---
+
+<header>
+  <h1>{{ site.name }}</h1>
+</header>
+
+<main>
+  <p>Hello World!</p>
+</main>
+
+<footer>
+  <p>&copy;{{ "now" | date: "%Y" }}</p>
+</footer>
+
+<script>
+  class Foo {
+    #bar = "bar";
+
+    static bar() {
+      console.log("bar");
+    }
+
+    constructor() {
+      console.log("Foo");
+    }
+  }
+</script>
+
+<script src="{{ '/js/script-in-body.js' | relative }}"></script>

@@ -1,0 +1,102 @@
+@use "sass:math";
+@use "sass:string";
+@use "sass:map";
+
+// 최소 뷰포트 너비인 경우의 값과 최대 뷰포트 너비인 경우의 값 사이의 값을 계산하여 clamp(최소값, 중간값, 최대값)으로 반환합니다.
+// font-size: fluid(10, 20, 320, 1920) => font-size: clamp(10px, (0.625px + 0.625vw), 20px)
+@function fluid($min, $max, $minVw: 375, $maxVw: 1920) {
+  $var: math.div(math.abs($max - $min), $maxVw - $minVw);
+
+  @if $max > $min {
+    $const: $max - $maxVw * $var;
+    $in-between: $const + "px + " + ($var * 100) + "vw";
+
+    @return string.unquote(
+      "clamp(" + $min + "px, " + $in-between + ", " + $max + "px)"
+    );
+  } @else {
+    $const: $max * -1 - $maxVw * $var;
+    $in-between: "(" + $const + "px + " + ($var * 100) + "vw) * -1";
+
+    @return string.unquote(
+      "clamp(" + $max + "px, " + $in-between + ", " + $min + "px)"
+    );
+  }
+}
+
+$min-width: 1380 !default;
+$max-width: 1920 !default;
+
+// fv = fluid value
+// 레이아웃의 최소, 최대값 사이의 값을 가변값으로 적용하기 위하여 사용하며 포토샵에 사용된 값을 그대로 적용합니다.
+// font-size: fv(20) => clamp(10px, (0.625px + 0.625vw), 20px)
+// @use문으로 util을 불러올 때 $min-width와 $max-width를 설정해야 합니다.
+// @use "util" as * with (
+//   $min-width: 1380,
+//   $max-width: 1920
+// );
+@function fv($value) {
+  $ratio: math.div($min-width, $max-width);
+
+  @return fluid($value * $ratio, $value, $min-width, $max-width);
+}
+
+@function unit($value, $unit: "px") {
+  @return string.unquote($value + $unit);
+}
+
+@function em($value, $base) {
+  @return unit(math.div($value, $base), "em");
+}
+
+@function rem($value, $base: 16) {
+  @return unit(math.div($value, $base), "rem");
+}
+
+@function vw($value, $viewport-width) {
+  @return unit(math.div($value, $viewport-width) * 100, "vw");
+}
+
+@function percent($value, $base) {
+  @return math.percentage(math.div($value, $base));
+}
+
+@function lh($value, $base) {
+  @return math.div($value, $base);
+}
+
+// aspect-ratio 지원하지 않는 브라우저 대응을 위해 사용합니다.
+// ::before를 사용하여 영역을 확보하므로 이로 인해 발생할 수 있는 이슈들을 충분히 고려하여 사용하세요.
+@mixin aspect-ratio($width, $height) {
+  $ratio: math.div($width, $height);
+
+  aspect-ratio: $ratio;
+
+  @supports not (aspect-ratio: $ratio) {
+    &::before {
+      content: "";
+      display: block;
+      padding-bottom: percent($height, $width);
+    }
+  }
+}
+
+// font-weight names
+$thin: 100;
+$extra-light: 200;
+$light: 300;
+$regular: 400;
+$medium: 500;
+$semi-bold: 600;
+$bold: 700;
+$extra-bold: 800;
+$black: 900;
+
+.visually-hidden:not(:focus) {
+  clip-path: inset(50%);
+  height: 1px;
+  overflow: hidden;
+  position: absolute;
+  white-space: nowrap;
+  width: 1px;
+}

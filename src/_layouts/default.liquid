@@ -1,0 +1,72 @@
+<!doctype html>
+<html lang="{{ lang | default: 'ko' }}">
+  <head>
+    <meta charset="UTF-8">
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0{% if manifest %}, viewport-fit=cover{% endif %}"
+    >
+    <meta name="robots" content="noindex, nofollow">
+    <meta name="format-detection" content="telephone=no">
+    {%- if title -%}
+      <title>
+        {{ title }}
+        -
+        {{ site.name }}
+        &times; CTTD
+      </title>
+    {%- else -%}
+      <title>
+        {{ site.name }}
+        &times; CTTD
+      </title>
+    {%- endif -%}
+    {%- if favicon %}
+      <link rel="icon" href="{{ favicon }}">
+    {% endif -%}
+    {%- if manifest -%}
+      <link rel="manifest" href="{{ manifest }}">
+      <meta name="apple-mobile-web-app-capable" content="yes">
+      <meta name="mobile-web-app-capable" content="yes">
+      <meta name="apple-mobile-web-app-status-bar-style" content="black">
+    {%- endif -%}
+    {%- if css -%}
+      {%- for href in css -%}
+        <link rel="stylesheet" href="{{ href | replace: '.scss', '.css' }}">
+      {%- endfor -%}
+    {%- endif -%}
+    {%- if js -%}
+      {%- for script in js -%}
+        {%- if script.src -%}
+          <script
+            {% if script.type %}
+              type="{{ script.type }}"
+            {% elsif script.src contains '.esm.js' %}
+              type="module"
+            {% endif %}
+            {% if script.async %}
+              async
+            {% endif %}
+            {% if script.defer %}
+              defer
+            {% endif %}
+            src="{{script.src}}"
+          ></script>
+        {%- else -%}
+          <script
+            {% if script contains '.esm.js' %}
+              type="module"
+            {% else %}
+              async
+              defer
+            {% endif %}
+            src="{{ script }}"
+          ></script>
+        {%- endif -%}
+      {%- endfor -%}
+    {%- endif -%}
+  </head>
+  <body>
+    {{ content }}
+  </body>
+</html>

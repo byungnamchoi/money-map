@@ -1,0 +1,21 @@
+---
+eleventyExcludeFromCollections: true
+title: "INDEX"
+layout: "default"
+---
+<h1>
+  {{ site.name }}
+  {{ title }}
+</h1>
+
+{%- if collections.view -%}
+  <h2>Views</h2>
+
+  <ul>
+    {%- for view in collections.view -%}
+      <li>
+        <a href="{{ view.url }}">{{ view.data.title }}</a>
+      </li>
+    {%- endfor -%}
+  </ul>
+{%- endif -%}

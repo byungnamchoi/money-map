@@ -1,0 +1,11 @@
+{
+  "recommendations": [
+    "editorconfig.editorconfig",
+    "dbaeumer.vscode-eslint",
+    "html-validate.vscode-html-validate",
+    "esbenp.prettier-vscode",
+    "stylelint.vscode-stylelint",
+    "sissel.shopify-liquid",
+    "csstools.postcss"
+  ]
+}
