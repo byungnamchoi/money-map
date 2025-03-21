@@ -1,0 +1,319 @@
+@use "reset";
+@use "util" as * with (
+  $min-width: 320,
+  $max-width: 750
+);
+
+// `src/_includes/` 디렉토리 내의 파일은 경로 없이 `@use`, `@import` 할 수 있습니다.
+// Sass 파일은 컴파일 된 후 PostCSS로 후처리됩니다.
+
+@custom-selector :--heading h1, h2, h3, h4, h5, h6;
+
+html,
+body {
+  width: 100%;
+  height: 100%;
+  min-width: 320px;
+  max-width: 750px;
+}
+
+body {
+  padding: 0 var(--gutter, 0);
+  margin: 0;
+}
+
+a {
+  color: var(--color-primary, currentColor);
+}
+
+:--heading {
+  text-transform: uppercase;
+}
+
+.app {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  margin-inline: auto;
+  padding-inline: fv(20);
+}
+
+.header {
+  display: flex;
+  flex-direction: column;
+  padding-block: fv(20) fv(40);
+
+  h1 {
+    font-size: fv(40);
+  }
+
+  p {
+    font-size: fv(26);
+  }
+}
+
+.main {
+  flex: 1;
+}
+
+.footer {
+  padding-block: var(--footer-pad-top, var(--footer-pad-block, fv(60)))
+    var(--footer-pad-bottom, var(--footer-pad-block, fv(60)));
+  font-size: fv(30);
+  text-align: center;
+}
+
+.button {
+  display: inline-flex;
+  justify-content: center;
+  align-items: center;
+  transition:
+    background 0.3s ease-in-out,
+    color 0.3s ease-in-out,
+    opacity 0.3s ease-in-out;
+  height: var(--button-height, fv(40));
+  padding-inline: var(--button-pad-right, var(--button-pad-inline, fv(20)))
+    var(--button-pad-left, var(--button-pad-inline, fv(20)));
+  opacity: var(--button-hover-opacity, 1);
+  color: var(--button-color, #a1a1aa);
+  background: var(--button-background, #3f3f46);
+  border: var(--button-border-width, 0) solid
+    var(--button-border-color, transparent);
+  border-radius: var(--button-border-radius, fv(8));
+  font-size: var(--button-font-size, fv(20));
+  line-height: var(--button-line-height, 1);
+
+  &:hover {
+    --button-hover-opacity: 0.8;
+  }
+}
+
+.tabs-container {
+  display: flex;
+  flex-direction: column;
+  gap: fv(20);
+}
+
+.tabs {
+  display: flex;
+  gap: fv(20);
+  padding: fv(5);
+  background: var(--tabs-background, #27272a);
+  border-radius: fv(12);
+  overflow-x: auto;
+
+  &::-webkit-scrollbar {
+    height: 5px;
+  }
+
+  &::-webkit-scrollbar-thumb {
+    background: #ccc; /* 스크롤바 색상 */
+    border-radius: 16px; /* 스크롤바 둥근 테두리 */
+  }
+
+  &::-webkit-scrollbar-track {
+    background: rgba(220, 20, 60, 0.1); /*스크롤바 뒷 배경 색상*/
+  }
+
+  .button {
+    --button-background: transparent;
+
+    flex-shrink: 0;
+
+    &.is-active {
+      --button-color: #fff;
+      --button-background: #3f3f46;
+    }
+  }
+}
+
+.tabs-buttons {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: fv(10);
+
+  p {
+    font-size: fv(24);
+  }
+
+  .button {
+    &.is-selected {
+      --button-color: #fff;
+      --button-background: #000;
+    }
+  }
+}
+
+.tabs-results {
+  font-size: fv(20);
+}
+
+.viewer {
+  margin-top: fv(20);
+}
+
+.viewer-controller {
+  input[type="number"] {
+    height: fv(35);
+    padding-inline: fv(10);
+    border: 1px solid #999;
+    font-size: fv(20);
+  }
+
+  &__form {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    align-items: center;
+    gap: fv(20);
+  }
+
+  &__tip {
+    display: block;
+    margin-top: fv(10);
+    color: #999;
+    font-size: fv(18);
+  }
+
+  &__results {
+    margin-top: fv(10);
+    font-size: fv(20);
+  }
+}
+
+.viewer-calculator {
+  display: grid;
+  grid-template-columns: 1fr 0.6fr;
+  gap: fv(15);
+  margin-top: fv(20);
+}
+
+.viewer-calculator-group {
+  display: flex;
+  flex-direction: column;
+  gap: fv(15);
+
+  .unit {
+    display: flex;
+    flex-direction: column;
+    gap: fv(10);
+    border: 1px solid #e2e8f0;
+    border-radius: fv(5);
+    padding: fv(15);
+    transition: box-shadow 0.3s ease;
+
+    &:hover {
+      box-shadow:
+        0 4px 6px -1px rgba(0, 0, 0, 0.1),
+        0 2px 4px -1px rgba(0, 0, 0, 0.06);
+    }
+  }
+
+  .unit-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .unit-label {
+    font-weight: 500;
+    font-size: 1.1rem;
+  }
+
+  .unit-controller {
+    display: flex;
+    align-items: center;
+    gap: fv(5);
+  }
+
+  .unit-count {
+    min-width: fv(32);
+    text-align: center;
+  }
+
+  .unit-button {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: fv(32);
+    height: fv(32);
+    background: #e2e8f0;
+    border-radius: 50%;
+    border: none;
+    font-size: fv(16);
+    font-weight: bold;
+    transition: background 0.2s;
+
+    &:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    &:hover:not(:disabled) {
+      background: #cbd5e1;
+    }
+  }
+
+  .currency-images {
+    display: flex;
+    flex-wrap: wrap;
+    gap: fv(5);
+    position: relative;
+    height: fv(160);
+  }
+
+  .currency-image-item {
+    z-index: 1;
+    position: absolute;
+    top: fv(100);
+    left: fv(-30);
+    transform: rotate(50deg);
+    transform-origin: right;
+
+    @for $i from 3 through 11 {
+      &:nth-child(#{$i}) {
+        z-index: $i - 1;
+        transform: rotate(#{30 + ($i * 10)}deg);
+      }
+    }
+
+    img {
+      width: fv(150);
+      height: fv(75);
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    }
+  }
+
+  .currency-more {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-left: fv(290);
+    font-size: fv(20);
+  }
+}
+
+.viewer-calculator-results {
+  display: flex;
+  flex-direction: column;
+  gap: fv(15);
+
+  &__change {
+    padding: fv(10);
+    background-color: #e9f7ef;
+    border-radius: fv(4);
+  }
+
+  &__total {
+    .total-list {
+      list-style-type: none;
+      margin-top: fv(10);
+    }
+
+    .total-item {
+      &:not(:last-child) {
+        margin-bottom: fv(5);
+      }
+    }
+  }
+}

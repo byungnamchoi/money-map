@@ -1,3 +1,3 @@
 module.exports = {
-  name: "PROJECT NAME",
+  name: "MONEY MAP",
 };

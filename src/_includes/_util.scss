@@ -3,8 +3,8 @@
 @use "sass:map";
 
 // 최소 뷰포트 너비인 경우의 값과 최대 뷰포트 너비인 경우의 값 사이의 값을 계산하여 clamp(최소값, 중간값, 최대값)으로 반환합니다.
-// font-size: fluid(10, 20, 320, 1920) => font-size: clamp(10px, (0.625px + 0.625vw), 20px)
-@function fluid($min, $max, $minVw: 375, $maxVw: 1920) {
+// font-size: fluid(10, 20, 320, 750) => font-size: clamp(10px, (0.625px + 0.625vw), 20px)
+@function fluid($min, $max, $minVw: 375, $maxVw: 750) {
   $var: math.div(math.abs($max - $min), $maxVw - $minVw);
 
   @if $max > $min {
@@ -24,16 +24,16 @@
   }
 }
 
-$min-width: 1380 !default;
-$max-width: 1920 !default;
+$min-width: 320 !default;
+$max-width: 750 !default;
 
 // fv = fluid value
 // 레이아웃의 최소, 최대값 사이의 값을 가변값으로 적용하기 위하여 사용하며 포토샵에 사용된 값을 그대로 적용합니다.
 // font-size: fv(20) => clamp(10px, (0.625px + 0.625vw), 20px)
 // @use문으로 util을 불러올 때 $min-width와 $max-width를 설정해야 합니다.
 // @use "util" as * with (
-//   $min-width: 1380,
-//   $max-width: 1920
+//   $min-width: 320,
+//   $max-width: 750
 // );
 @function fv($value) {
   $ratio: math.div($min-width, $max-width);
@@ -80,17 +80,6 @@ $max-width: 1920 !default;
     }
   }
 }
-
-// font-weight names
-$thin: 100;
-$extra-light: 200;
-$light: 300;
-$regular: 400;
-$medium: 500;
-$semi-bold: 600;
-$bold: 700;
-$extra-bold: 800;
-$black: 900;
 
 .visually-hidden:not(:focus) {
   clip-path: inset(50%);

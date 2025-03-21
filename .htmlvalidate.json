@@ -4,6 +4,10 @@
   "rules": {
     "doctype-style": "off",
     "void-style": "off",
-    "attribute-boolean-style": "off"
+    "attribute-boolean-style": "off",
+    "text-content": "off",
+    "element-required-attributes": "off",
+    "wcag/h37": "off",
+    "wcag/h67": "off"
   }
 }

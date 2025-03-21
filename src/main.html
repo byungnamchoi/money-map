@@ -1,42 +1,612 @@
 ---
 title: "MAIN"
 layout: "default"
-css: "/css/main.scss"
+css: "/assets/css/main.scss"
 js:
-  - "/js/main.esm.js"
-  - "./page.js"
-  - type: "nomodule"
-    src: "./fallback.js"
-  - type: "module"
-    src: "my-module.js"
-  - defer: true
-    src: "./defer.js"
+  - "/assets/js/main.esm.js"
 ---
 
-<header>
-  <h1>{{ site.name }}</h1>
-</header>
+<div class="app">
+  <header class="header">
+    <h1>{{ site.name }}</h1>
+    <p>
+      인기 여행지<br />
+      화폐 정보와 가계부 기능을 제공합니다.
+    </p>
+  </header>
 
-<main>
-  <p>Hello World!</p>
-</main>
+  <main class="main">
+    <!-- 국가 설정 -->
+    <div
+      x-data="countrySelector()"
+      x-init="checkRegionHasCountries()"
+      class="tabs-container"
+    >
+      <div class="tabs">
+        <template x-for="(region, index) in regions" :key="region.name">
+          <button
+            @click="activeRegion = index; checkRegionHasCountries()"
+            :class="{'is-active': activeRegion === index}"
+            type="button"
+            class="button"
+            x-text="region.name"
+          ></button>
+        </template>
+      </div>
+      <div class="tabs-buttons">
+        <template x-if="regions[activeRegion].countries.some(c => c.code)">
+          <template
+            x-for="country in regions[activeRegion].countries.filter(c => c.code)"
+            :key="country.code"
+          >
+            <button
+              @click="selectCountry(country)"
+              :class="{'is-selected': selectedCountry?.code === country.code}"
+              class="button"
+              type="button"
+            >
+              <span x-text="country.name"></span>
+            </button>
+          </template>
+        </template>
+        <template x-if="!regions[activeRegion].countries.some(c => c.code)">
+          <p>해당 국가는 준비중 입니다.</p>
+        </template>
+      </div>
+      <div x-show="selectedCountry" class="tabs-results">
+        선택된 국가:
+        <strong
+          x-text="selectedCountry?.name + ` (${selectedCountry?.code}/${selectedCountry?.unit}/${selectedCountry?.symbol})`"
+        ></strong>
+      </div>
+    </div>
 
-<footer>
-  <p>&copy;{{ "now" | date: "%Y" }}</p>
-</footer>
+    <!-- 금액 설정 -->
+    <div
+      x-data="amountInput()"
+      class="viewer"
+      x-show="$store.countryState.hasSelectedCountry"
+    >
+      <div class="viewer-controller">
+        <div class="viewer-controller__form">
+          <input
+            type="number"
+            x-model="formattedAmount"
+            @input="updateAmount"
+            title="금액 입력"
+            placeholder="금액을 입력해 주세요."
+            min="0"
+            max="10000000"
+          />
+          <input
+            type="range"
+            x-model="amount"
+            @input="updateFormattedAmount"
+            min="0"
+            max="10000000"
+            step="100"
+            title="금액 설정"
+          />
+        </div>
+        <small class="viewer-controller__tip"
+          >*금액은 최대 1,000만원까지 입력 가능합니다.</small
+        >
+        <p x-show="amount > 0" class="viewer-controller__results">
+          현재 금액: <strong x-text="formatCurrency(amount)"></strong>
+        </p>
+      </div>
 
+      <div x-show="amount > 0" class="viewer-calculator">
+        <div class="viewer-calculator-group">
+          <template x-for="(unit, index) in getDenominations()" :key="index">
+            <div class="unit">
+              <div class="unit-header">
+                <span x-text="formatUnitLabel(unit)" class="unit-label"></span>
+                <div class="unit-controller">
+                  <button
+                    type="button"
+                    class="unit-button"
+                    @click="decreaseUnit(index)"
+                    :disabled="unit.count <= 0"
+                  >
+                    -
+                  </button>
+                  <span x-text="unit.count" class="unit-count"></span>
+                  <button
+                    type="button"
+                    class="unit-button"
+                    @click="increaseUnit(index)"
+                    :disabled="!canIncreaseUnit(index)"
+                  >
+                    +
+                  </button>
+                </div>
+              </div>
+
+              <!-- 화폐 이미지 표시 영역 -->
+              <div x-show="unit.count > 0" class="currency-images">
+                <template
+                  x-for="i in getDisplayImageCount(unit.count)"
+                  :key="i"
+                >
+                  <div class="currency-image-item">
+                    <img
+                      :src="unit.image"
+                      :alt="`${selectedCountry.code} ${unit.value}`"
+                      title="화폐 이미지"
+                    />
+                  </div>
+                </template>
+                <!-- 이미지가 5개 이상일 경우 더보기 표시 -->
+                <div x-show="unit.count > 10" class="currency-more">
+                  <span x-text="`+${unit.count - 10}장 더`"></span>
+                </div>
+              </div>
+            </div>
+          </template>
+        </div>
+
+        <div class="viewer-calculator-results">
+          <div class="viewer-calculator-results__change">
+            남은 금액: <strong x-text="formatCurrency(smallChange)"></strong>
+          </div>
+
+          <div class="viewer-calculator-results__total">
+            <p>총 합계:</p>
+            <ul class="total-list">
+              <template
+                x-for="(unit, index) in getDenominations().filter(u => u.count > 0)"
+                :key="index"
+              >
+                <li class="total-item">
+                  <span x-text="formatUnitLabel(unit)"></span>:
+                  <strong x-text="unit.count + '장'"></strong>
+                  (<small
+                    x-text="formatCurrency(unit.value * unit.count)"
+                  ></small
+                  >)
+                </li>
+              </template>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <footer class="footer">
+    &copy;{{ "now" | date: "%Y" }} {{ site.name }}. ALL RIGHTS RESERVED.
+  </footer>
+</div>
+
+<script
+  defer
+  src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"
+></script>
 <script>
-  class Foo {
-    #bar = "bar";
+  document.addEventListener("alpine:init", () => {
+    Alpine.store("countryState", {
+      hasSelectedCountry: false,
+      shouldResetAmount: false,
+    });
+  });
 
-    static bar() {
-      console.log("bar");
-    }
+  function countrySelector() {
+    return {
+      activeRegion: 0,
+      selectedCountry: null,
 
-    constructor() {
-      console.log("Foo");
-    }
+      // 현재 지역에 유효한 국가가 있는지 체크
+      checkRegionHasCountries() {
+        const hasValidCountries = this.regions[
+          this.activeRegion
+        ].countries.some((c) => c.code);
+        if (!hasValidCountries) {
+          // 유효한 국가가 없으면 선택 상태 초기화 및 amount 영역 숨기기
+          this.selectedCountry = null;
+          Alpine.store("countryState").hasSelectedCountry = false;
+          Alpine.store("countryState").shouldResetAmount = true;
+        }
+      },
+      regions: [
+        {
+          name: "아시아",
+          countries: [
+            {
+              name: "대한민국",
+              code: "KRW",
+              unit: "원",
+              symbol: "₩",
+              denominations: [
+                { value: 50000, image: "/assets/images/krw-50000.jpg" },
+                { value: 10000, image: "/assets/images/krw-10000.jpg" },
+                { value: 5000, image: "/assets/images/krw-5000.jpg" },
+                { value: 1000, image: "/assets/images/krw-1000.jpg" },
+              ],
+            },
+            {
+              name: "일본",
+              code: "JPY",
+              unit: "엔",
+              symbol: "¥",
+              denominations: [
+                { value: 10000, image: "/assets/images/jpy-10000.jpg" },
+                { value: 5000, image: "/assets/images/jpy-5000.jpg" },
+                { value: 1000, image: "/assets/images/jpy-1000.jpg" },
+              ],
+            },
+            {
+              name: "중국",
+              code: "CNY",
+              unit: "위안",
+              symbol: "元",
+              denominations: [
+                { value: 100, image: "/assets/images/cny-100.jpg" },
+                { value: 50, image: "/assets/images/cny-50.jpg" },
+                { value: 20, image: "/assets/images/cny-20.jpg" },
+                { value: 10, image: "/assets/images/cny-10.jpg" },
+                { value: 5, image: "/assets/images/cny-5.jpg" },
+                { value: 1, image: "/assets/images/cny-1.jpg" },
+              ],
+            },
+            {
+              name: "베트남",
+              code: "VND",
+              unit: "동",
+              symbol: "₫",
+              denominations: [
+                { value: 500000, image: "/assets/images/vdn-500000.jpg" },
+                { value: 200000, image: "/assets/images/vdn-200000.jpg" },
+                { value: 100000, image: "/assets/images/vdn-100000.jpg" },
+                { value: 50000, image: "/assets/images/vdn-50000.jpg" },
+                { value: 20000, image: "/assets/images/vdn-20000.jpg" },
+                { value: 10000, image: "/assets/images/vdn-10000.jpg" },
+                { value: 5000, image: "/assets/images/vdn-5000.jpg" },
+                { value: 2000, image: "/assets/images/vdn-2000.jpg" },
+                { value: 1000, image: "/assets/images/vdn-1000.jpg" },
+              ],
+            },
+            {
+              name: "태국",
+              code: "THB",
+              unit: "바트",
+              symbol: "฿",
+              denominations: [
+                { value: 1000, image: "/assets/images/thb-1000.jpg" },
+                { value: 500, image: "/assets/images/thb-500.jpg" },
+                { value: 100, image: "/assets/images/thb-100.jpg" },
+                { value: 50, image: "/assets/images/thb-50.jpg" },
+                { value: 20, image: "/assets/images/thb-20.jpg" },
+              ],
+            },
+            {
+              name: "필리핀",
+              code: "PHP",
+              unit: "페소",
+              symbol: "₱",
+              denominations: [
+                { value: 1000, image: "/assets/images/php-1000.jpg" },
+                { value: 500, image: "/assets/images/php-500.jpg" },
+                { value: 100, image: "/assets/images/php-100.jpg" },
+                { value: 50, image: "/assets/images/php-50.jpg" },
+              ],
+            },
+            {
+              name: "인도네시아",
+              code: "IDR",
+              unit: "루피아",
+              symbol: "Rp",
+              denominations: [
+                { value: 100000, image: "/assets/images/idr-100000.jpg" },
+                { value: 50000, image: "/assets/images/idr-50000.jpg" },
+                { value: 20000, image: "/assets/images/idr-20000.jpg" },
+                { value: 10000, image: "/assets/images/idr-10000.jpg" },
+                { value: 5000, image: "/assets/images/idr-5000.jpg" },
+                { value: 2000, image: "/assets/images/idr-2000.jpg" },
+                { value: 1000, image: "/assets/images/idr-1000.jpg" },
+              ],
+            },
+            {
+              name: "말레이시아",
+              code: "MYR",
+              unit: "링깃",
+              symbol: "RM",
+              denominations: [
+                { value: 100, image: "/assets/images/myr-100.jpg" },
+                { value: 50, image: "/assets/images/myr-50.jpg" },
+                { value: 20, image: "/assets/images/myr-20.jpg" },
+                { value: 10, image: "/assets/images/myr-10.jpg" },
+                { value: 5, image: "/assets/images/myr-5.jpg" },
+                { value: 1, image: "/assets/images/myr-1.jpg" },
+              ],
+            },
+            {
+              name: "싱가포르",
+              code: "SGD",
+              unit: "싱가폴 달러",
+              symbol: "$SGD",
+              denominations: [
+                { value: 10000, image: "/assets/images/sgd-10000.jpg" },
+                { value: 1000, image: "/assets/images/sgd-1000.jpg" },
+                { value: 100, image: "/assets/images/sgd-100.jpg" },
+                { value: 50, image: "/assets/images/sgd-50.jpg" },
+                { value: 10, image: "/assets/images/sgd-10.jpg" },
+                { value: 5, image: "/assets/images/sgd-5.jpg" },
+                { value: 2, image: "/assets/images/sgd-2.jpg" },
+              ],
+            },
+          ],
+        },
+        {
+          name: "유럽",
+          countries: [{ name: "", code: "", unit: "", symbol: "" }],
+        },
+        {
+          name: "오세아니아",
+          countries: [{ name: "", code: "", unit: "", symbol: "" }],
+        },
+        {
+          name: "북미",
+          countries: [{ name: "", code: "", unit: "", symbol: "" }],
+        },
+        {
+          name: "남미",
+          countries: [{ name: "", code: "", unit: "", symbol: "" }],
+        },
+        {
+          name: "아프리카",
+          countries: [{ name: "", code: "", unit: "", symbol: "" }],
+        },
+      ],
+      selectCountry(country) {
+        if (country.code) {
+          this.selectedCountry = country;
+          // 국가 선택 상태 업데이트
+          Alpine.store("countryState").hasSelectedCountry = true;
+
+          // 금액 초기화 필요한 경우 이벤트 발생
+          if (Alpine.store("countryState").shouldResetAmount) {
+            window.dispatchEvent(new CustomEvent("reset-amount"));
+            Alpine.store("countryState").shouldResetAmount = false;
+          }
+
+          // 국가 선택 이벤트 발생
+          window.dispatchEvent(
+            new CustomEvent("country-selected", {
+              detail: {
+                name: country.name,
+                code: country.code,
+                unit: country.unit,
+                symbol: country.symbol,
+                denominations: [...country.denominations],
+              },
+            }),
+          );
+        }
+      },
+    };
+  }
+
+  function amountInput() {
+    return {
+      amount: 0,
+      formattedAmount: "",
+      selectedCountry: {
+        unit: "원",
+        symbol: "₩",
+        code: "KRW",
+        denominations: [
+          { value: 50000, image: "/assets/images/krw-50000.jpg" },
+          { value: 10000, image: "/assets/images/krw-10000.jpg" },
+          { value: 5000, image: "/assets/images/krw-5000.jpg" },
+          { value: 1000, image: "/assets/images/krw-1000.jpg" },
+        ],
+      },
+      denominations: [], // 화폐 단위별 개수
+      smallChange: 0, // 계산 후 남은 금액
+      countrySelectedHandler: null, // 이벤트 핸들러 참조 저장
+
+      // 화폐 이미지 애니메이션 각도 계산 함수 추가
+      calculateFanAngles(count) {
+        // 이미지 수에 따라 부채 각도 조정
+        const images = document.querySelectorAll(".currency-image-container");
+        if (count <= 1) return;
+
+        const maxAngle = 30; // 최대 회전 각도
+        const angleStep = (maxAngle * 2) / (count - 1);
+
+        images.forEach((img, index) => {
+          const rotation = -maxAngle + angleStep * index;
+          const translateX = rotation / 2; // 회전 각도에 비례한 X축 이동
+
+          img.style.transform = `translateX(${translateX}%) rotate(${rotation}deg)`;
+          img.style.zIndex = count - index;
+        });
+      },
+
+      // 화폐 이미지가 추가될 때 애니메이션 적용
+      updateCurrencyImages(unitIndex) {
+        // 이미지 컨테이너에 대한 참조 얻기
+        const container = document.querySelector(
+          `.unit:nth-child(${unitIndex + 1}) .currency-images`,
+        );
+        if (!container) return;
+
+        // 잠시 후 애니메이션 적용
+        setTimeout(() => {
+          const count = this.denominations[unitIndex].count;
+          const displayCount = Math.min(count, 5);
+
+          // 각 화폐 이미지 컨테이너에 애니메이션 클래스 추가
+          const imageContainers = container.querySelectorAll(
+            ".currency-image-container",
+          );
+          imageContainers.forEach((imgContainer, i) => {
+            if (i < displayCount) {
+              // 이미지를 살짝 지연시켜 순차적으로 표시
+              setTimeout(() => {
+                imgContainer.classList.add("fan-show");
+              }, i * 100);
+            }
+          });
+        }, 50);
+      },
+
+      // 화폐 이미지 최대 표시 개수
+      getDisplayImageCount(count) {
+        return Math.min(count, 10); // 최대 10개까지만 표시
+      },
+
+      updateAmount() {
+        // 숫자만 추출
+        const numericValue = this.formattedAmount.replace(/[^\d]/g, "");
+
+        // 최대값 제한
+        this.amount = Math.min(parseInt(numericValue) || 0, 10000000);
+
+        // 금액이 변경되면 화폐 단위 계산 초기화
+        this.resetDenominationCalculation();
+      },
+
+      // range 슬라이더 값이 변경될 때 호출되는 함수
+      updateFormattedAmount() {
+        this.formattedAmount = this.amount ? this.amount.toString() : "";
+
+        // 금액이 변경되면 화폐 단위 계산 초기화
+        this.resetDenominationCalculation();
+      },
+
+      formatCurrency(value) {
+        return (
+          new Intl.NumberFormat("ko-KR").format(value) +
+          this.selectedCountry.unit
+        );
+      },
+
+      // 화폐 단위 레이블 포맷
+      formatUnitLabel(unit) {
+        return (
+          this.selectedCountry.symbol +
+          new Intl.NumberFormat("ko-KR").format(unit.value) +
+          this.selectedCountry.unit
+        );
+      },
+
+      // 화폐 단위 계산 초기화
+      resetDenominationCalculation() {
+        // 화폐 단위 정보 초기화
+        if (
+          this.selectedCountry &&
+          Array.isArray(this.selectedCountry.denominations)
+        ) {
+          // 기존 코드는 denominations를 숫자 배열로 처리하지만,
+          // 이미지 경로가 포함된 객체 배열로 변환이 필요함
+          this.denominations = this.selectedCountry.denominations.map(
+            (denom) => ({
+              value: denom.value,
+              image: denom.image,
+              count: 0,
+            }),
+          );
+
+          // 자동으로 가장 큰 단위부터 계산
+          this.calculateInitialDenominations();
+
+          // 남은 금액 업데이트
+          this.updateSmallChange();
+        }
+      },
+
+      // 초기 화폐 단위 자동 계산
+      calculateInitialDenominations() {
+        let smallChange = this.amount;
+
+        this.denominations.forEach((unit, index) => {
+          if (smallChange >= unit.value) {
+            const count = Math.floor(smallChange / unit.value);
+            this.denominations[index].count = count;
+            smallChange -= count * unit.value;
+          }
+        });
+
+        this.smallChange = smallChange;
+      },
+
+      // 화폐 단위 목록 가져오기
+      getDenominations() {
+        return this.denominations;
+      },
+
+      // 단위 증가
+      increaseUnit(index) {
+        if (this.canIncreaseUnit(index)) {
+          this.denominations[index].count++;
+          this.updateSmallChange();
+        }
+      },
+
+      // 단위 증가 가능 여부 확인
+      canIncreaseUnit(index) {
+        return this.remainingAmount >= this.denominations[index].value;
+      },
+
+      // 단위 감소
+      decreaseUnit(index) {
+        if (this.denominations[index].count > 0) {
+          this.denominations[index].count--;
+          this.updateSmallChange();
+        }
+      },
+
+      // 남은 금액 업데이트
+      updateSmallChange() {
+        const totalUsed = this.denominations.reduce((sum, unit) => {
+          return sum + unit.value * unit.count;
+        }, 0);
+
+        this.remainingAmount = this.amount - totalUsed;
+      },
+
+      init() {
+        // 국가 선택 이벤트 리스너 (이전 리스너 등록 해제 후 다시 등록)
+        this.countrySelectedHandler = (event) => {
+          // 깊은 복사를 통해 객체 참조 문제 방지
+          this.selectedCountry = {
+            name: event.detail.name,
+            code: event.detail.code,
+            unit: event.detail.unit,
+            symbol: event.detail.symbol,
+            denominations: [...event.detail.denominations],
+          };
+
+          // 국가가 변경되면 화폐 단위 계산 초기화
+          this.denominations = []; // 기존 배열 완전히 비우기
+          if (this.amount > 0) {
+            // 약간의 지연을 추가하여 상태 갱신 보장
+            setTimeout(() => {
+              this.resetDenominationCalculation();
+            }, 10);
+          }
+        };
+
+        // 기존 이벤트 리스너 제거 후 다시 등록
+        window.removeEventListener(
+          "country-selected",
+          this.countrySelectedHandler,
+        );
+        window.addEventListener(
+          "country-selected",
+          this.countrySelectedHandler,
+        );
+
+        // 금액 초기화 이벤트 리스너
+        window.addEventListener("reset-amount", () => {
+          this.amount = 0;
+          this.formattedAmount = "";
+          this.denominations = [];
+          this.remainingAmount = 0;
+        });
+      },
+    };
   }
 </script>
-
-<script src="{{ '/js/script-in-body.js' | relative }}"></script>
